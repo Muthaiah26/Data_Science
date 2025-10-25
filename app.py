@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import fitz 
 import re
 import pandas as pd
 import numpy as np
@@ -10,15 +10,14 @@ import tempfile
 import traceback
 import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
+import time 
 
-# ---!!! NEW: CONFIGURE GEMINI API ---
-# NOTE: The user's environment will provide the API key.
-# We will use an empty string and the runtime will handle it.
-API_KEY = "AIzaSyCYDkTZgh13GV7d1-QR8Bq3YbjNNvcllmY" # Leave this as-is.
+
+API_KEY = "AIzaSyCYDkTZgh13GV7d1-QR8Bq3YbjNNvcllmY"
 try:
     genai.configure(api_key=API_KEY)
     
-    # ---!! NEW: Set up the model configuration
+    
     generation_config = {
       "temperature": 0.2,
       "top_p": 1,
@@ -33,7 +32,7 @@ try:
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
     ]
 
-    # Initialize the Gemini model
+    
     llm_model = genai.GenerativeModel(model_name="gemini-2.5-flash-preview-09-2025",
                                       generation_config=generation_config,
                                       safety_settings=safety_settings)
@@ -43,46 +42,82 @@ except Exception as e:
     print(f"Error configuring Generative AI: {e}")
     llm_model = None
 
-# --- END NEW GEMINI CONFIG ---
 
 
 app = Flask(__name__, template_folder='templates')
 
-# --- CONFIGURATION & MODEL LOADING ---
-SKILLS_DB = [
-    'python', 'java', 'c++', 'javascript', 'react', 'angular', 'vue',
-    'node.js', 'sql', 'mysql', 'postgresql', 'mongodb', 'docker',
-    'kubernetes', 'aws', 'azure', 'gcp', 'terraform', 'ansible',
-    'machine learning', 'deep learning', 'tensorflow', 'pytorch',
-    'scikit-learn', 'pandas', 'numpy', 'data analysis',
-    'project management', 'agile', 'scrum', 'product management',
-    'ui/ux design', 'figma', 'sketch', 'adobe xd', 'git',
-    'jira', 'communication', 'teamwork', 'leadership'
-]
+
+SKILLS_DB = []
 
 print("Loading sentence embedding model...")
 model = SentenceTransformer('all-MiniLM-L6-v2')
 print("Model loaded.")
+
+
+def load_master_skills(csv_path='jobs_skills.csv'):
+    """
+    Loads the master list of all skills from a separate CSV file.
+    Handles a 'Skills' column with semicolon-separated values.
+    """
+    try:
+        
+        skills_df = pd.read_csv(csv_path)
+        
+        
+        if 'Skills' in skills_df.columns:
+            skills_column = skills_df['Skills']
+        elif 'skills' in skills_df.columns:
+            skills_column = skills_df['skills']
+        else:
+            skills_column = skills_df.iloc[:, 0]
+            print(f"Warning: 'Skills' or 'skills' column not found in '{csv_path}'. Falling back to first column.")
+        
+        all_skills_set = set()
+        
+     
+        for skill_string in skills_column.dropna():
+            
+            skills_in_row = str(skill_string).split(';')
+            
+            
+            for skill in skills_in_row:
+                cleaned_skill = skill.strip().lower()
+                if cleaned_skill: 
+                    all_skills_set.add(cleaned_skill)
+        
+        skills_list = list(all_skills_set)
+        print(f"Dynamically loaded {len(skills_list)} unique skills from '{csv_path}'.")
+        return skills_list
+    except FileNotFoundError:
+        print(f"Warning: Master skills file '{csv_path}' not found. SKILLS_DB will be empty. Resume skill extraction will not work.")
+        return []
+    except Exception as e:
+        print(f"Error reading master skills CSV '{csv_path}': {e}")
+        print("Assuming single column, no header. Please check the file format.")
+        return []
 
 def load_and_preprocess_jobs(csv_path='jobs.csv'):
     try:
         jobs_df = pd.read_csv(csv_path)
     except FileNotFoundError:
         print(f"Error: '{csv_path}' not found. Please create it.")
-        return pd.DataFrame(), None, {}
+        return pd.DataFrame(), None 
     except Exception as e:
         print(f"Error reading CSV '{csv_path}': {e}")
-        return pd.DataFrame(), None, {}
+        return pd.DataFrame(), None  
 
+   
     if 'description' not in jobs_df.columns:
-        print("Error: 'description' column not in jobs.csv")
-        return pd.DataFrame(), None, {}
+        print("Error: 'jobs.csv' must have 'description' column.")
+        return pd.DataFrame(), None
         
     print(f"Loading and preprocessing {len(jobs_df)} jobs from '{csv_path}'...")
     
     jobs_df['description'] = jobs_df['description'].astype(str)
     jobs_df['description_clean'] = jobs_df['description'].apply(clean_text)
-    jobs_df['skills'] = jobs_df['description_clean'].apply(lambda x: extract_skills(x, SKILLS_DB))
+    
+    print("Extracting skills from job descriptions using master skills list...")
+    jobs_df['skills_list'] = jobs_df['description_clean'].apply(lambda x: extract_skills(x, SKILLS_DB))
     
     print("Computing job embeddings...")
     job_embeddings = model.encode(jobs_df['description_clean'].tolist(), show_progress_bar=True)
@@ -97,9 +132,14 @@ def clean_text(text):
     return text.strip()
 
 def extract_skills(text, skills_list):
+    """
+    Extracts skills from resume text *based on the dynamically loaded skills_list*.
+    """
     found_skills = set()
+    cleaned_text = clean_text(text) # Clean the resume text once
     for skill in skills_list:
-        if re.search(r'\b' + re.escape(skill) + r'\b', text, re.IGNORECASE):
+        
+        if re.search(r'\b' + re.escape(skill) + r'\b', cleaned_text, re.IGNORECASE):
             found_skills.add(skill)
     return list(found_skills)
 
@@ -151,12 +191,10 @@ def calculate_skill_match_score(resume_skills, job_skills):
     
     return intersection / union if union > 0 else 0.0
 
-# ---!! NEW: Function to call Gemini API safely
 def get_gemini_response(prompt_text):
     if not llm_model:
         return "Gemini model is not loaded. Please check API key and configuration."
     
-    # Use exponential backoff for retries
     max_retries = 5
     delay = 1
     for i in range(max_retries):
@@ -168,14 +206,16 @@ def get_gemini_response(prompt_text):
             print(f"Gemini API call failed (attempt {i+1}/{max_retries}): {e}")
             if i < max_retries - 1:
                 time.sleep(delay)
-                delay *= 2  # Exponential backoff
+                delay *= 2
             else:
                 return f"Error communicating with Gemini API after {max_retries} attempts."
 
-# --- Load data on app start ---
+SKILLS_DB = load_master_skills('jobs_skills.csv')
+
+
 jobs_df, job_embeddings = load_and_preprocess_jobs()
 
-# --- FLASK ROUTES ---
+
 
 @app.route('/')
 def home():
@@ -206,17 +246,19 @@ def analyze():
         if not resume_text:
             return jsonify({"error": "Could not extract text from resume."}), 500
 
-        # --- 2. Process Resume ---
-        resume_clean = clean_text(resume_text)
-        resume_skills = extract_skills(resume_clean, SKILLS_DB)
+       
+        resume_skills = extract_skills(resume_text, SKILLS_DB)
+        resume_clean = clean_text(resume_text) # Clean text for embedding
         resume_vec = model.encode([resume_clean])
         
         if jobs_df.empty or job_embeddings is None:
             return jsonify({"error": "Job data is not loaded on the server."}), 500
 
-        # --- 3. Calculate Scores ---
+
         text_similarities = cosine_similarity(resume_vec, job_embeddings)[0]
-        skill_scores = [calculate_skill_match_score(resume_skills, job_skills) for job_skills in jobs_df['skills']]
+        
+       
+        skill_scores = [calculate_skill_match_score(resume_skills, job_skills) for job_skills in jobs_df['skills_list']]
         
         text_weight = 0.7
         skill_weight = 0.3
@@ -231,34 +273,33 @@ def analyze():
 
         results = []
         for _, row in top_matches_df.iterrows():
+            # Get skills from the pre-processed list
+            job_skill_list = row['skills_list'] 
             results.append({
                 "title": row['title'],
                 "company": row['company'],
                 "score": row['match_score'] * 100,
-                "matched_skills": list(set(resume_skills).intersection(set(row['skills']))),
-                "missing_skills": list(set(row['skills']).difference(set(resume_skills))),
-                "job_description": row['description'] # ---!! NEW: Pass description for AI analysis
+                "matched_skills": list(set(resume_skills).intersection(set(job_skill_list))),
+                "missing_skills": list(set(job_skill_list).difference(set(resume_skills))),
+                "job_description": row['description'] 
             })
             
-        # --- 5. !!! NEW: Call Gemini API for AI-powered insights ---
+        # --- 5. Call Gemini API for AI-powered insights ---
         
-        # A. Generate Resume Summary
         summary_prompt = f"Here is a resume:\n\n{resume_text}\n\nAct as a professional recruiter. Write a concise 3-sentence summary of this person's key strengths and professional profile."
         ai_summary = get_gemini_response(summary_prompt)
         
-        # B. Generate "Why you're a match" for the #1 job
         ai_match_explanation = ""
         if results:
             top_job = results[0]
             match_prompt = f"Resume:\n{resume_text}\n\nJob Description:\n{top_job['job_description']}\n\nAct as a hiring manager. In 3 bullet points, explain the *top 3 reasons* why the person with this resume is a strong fit for this specific job. Focus on matching skills and experience."
             ai_match_explanation = get_gemini_response(match_prompt)
 
-        # Return all data to the frontend
         return jsonify({
             "resume_skills": resume_skills,
             "jobs": results,
-            "ai_summary": ai_summary, # ---!! NEW
-            "ai_match_explanation": ai_match_explanation # ---!! NEW
+            "ai_summary": ai_summary,
+            "ai_match_explanation": ai_match_explanation
         })
 
     except Exception as e:
