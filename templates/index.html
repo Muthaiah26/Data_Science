@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Resume Analyzer</title>
+    <title>AI Resume Dashboard</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide icons -->
     <script src="https://unpkg.com/lucide-react@latest/dist/lucide.js"></script>
-    <!-- ---!! NEW: Load Showdown.js to render Markdown --- -->
+
+    <!-- Load Showdown.js to render Markdown -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+      <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         /* (Spinner and scrollbar styles remain the same) */
         @keyframes spin {
@@ -25,12 +26,12 @@
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-        /* ---!! NEW: Styles for AI-generated content --- */
+        /* Styles for AI-generated content */
         .ai-content {
             border-left: 4px solid #4f46e5; /* indigo-600 */
             padding-left: 1rem;
             margin-top: 1rem;
-            background-color: #fafafa; /* gray-50 */
+            background-color: #f9fafb; /* gray-50 */
             padding: 1rem;
             border-radius: 0.5rem;
         }
@@ -38,115 +39,183 @@
             list-style-type: disc;
             margin-left: 1.5rem;
             margin-top: 0.5rem;
+            line-height: 1.75;
         }
         .ai-content p {
             margin-bottom: 0.5rem;
+            line-height: 1.75;
+        }
+        .ai-content strong {
+            color: #1f2937; /* gray-800 */
         }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-        
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">AI Resume Analyzer</h1>
-            <p class="text-lg text-gray-600 mt-2">Upload your resume (PDF or TXT) to get AI-powered feedback and job matches.</p>
-        </header>
 
-        <!-- Main Content -->
-        <main class="bg-white rounded-lg shadow-xl p-6 md:p-8">
+    <!-- This flex container is the main layout wrapper -->
+    <div class="flex h-screen bg-gray-100">
+
+        <!-- Sidebar (Visible on medium screens and up) -->
+        <aside class="hidden md:flex md:flex-shrink-0 w-64 flex-col bg-gray-800 text-white">
+            <div class="flex flex-col flex-grow">
+                <!-- Sidebar Header/Logo -->
+                <div class="flex items-center h-16 flex-shrink-0 px-6 bg-gray-900">
+                    <i data-lucide="scan-line" class="h-8 w-8 text-indigo-400"></i>
+                    <span class="ml-3 text-xl font-semibold">AI Resume Pro</span>
+                </div>
+                
+                <!-- Navigation Links -->
+                <nav class="flex-1 px-4 py-4 space-y-2">
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg bg-gray-700 text-white">
+                        <i data-lucide="layout-dashboard" class="h-5 w-5 mr-3"></i>
+                        Dashboard
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white">
+                        <i data-lucide="user-circle" class="h-5 w-5 mr-3"></i>
+                        Profile
+                    </a>
+                    <a href="#" class="flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white">
+                        <i data-lucide="settings" class="h-5 w-5 mr-3"></i>
+                        Settings
+                    </a>
+                </nav>
+            </div>
             
-            <!-- (Upload Section remains the same) -->
-            <section id="upload-section">
-                <form id="resume-form" class="space-y-6">
-                    <div>
-                        <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Resume:</label>
-                        <div id="file-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all duration-300 ease-in-out">
-                            <div class="space-y-1 text-center py-4">
-                                <i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
-                                <div class="flex text-sm text-gray-600">
-                                    <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                                        <span>Upload a file</span>
-                                        <input id="file-upload" name="resume" type="file" class="sr-only" accept=".pdf,.txt">
-                                    </label>
-                                    <p class="pl-1">or drag and drop</p>
+            <!-- User Profile Section at Bottom -->
+            <div class="flex-shrink-0 p-4 border-t border-gray-700">
+                <a href="#" class="flex items-center group">
+                    <img class="h-10 w-10 rounded-full" src="https://placehold.co/100x100/6366f1/white?text=User" alt="User Avatar">
+                    <div class="ml-3">
+                        <p class="text-sm font-medium text-white">Jane Doe</p>
+                        <p class="text-xs font-medium text-gray-400 group-hover:text-gray-300">View Profile</p>
+                    </div>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            
+            <!-- Mobile Header (Visible on small screens) -->
+            <header class="md:hidden flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4">
+                <div class="flex items-center">
+                    <i data-lucide="scan-line" class="h-7 w-7 text-indigo-600"></i>
+                    <span class="ml-2 text-lg font-semibold text-gray-800">AI Resume Pro</span>
+                </div>
+                <!-- Mobile menu button (can be wired up later) -->
+                <button class="text-gray-500 hover:text-gray-600">
+                    <i data-lucide="menu" class="h-6 w-6"></i>
+                </button>
+            </header>
+
+            <!-- Scrollable Content -->
+            <main class="flex-1 overflow-y-auto p-4 md:p-8">
+                
+                <!-- Page Header -->
+                <header class="mb-8">
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
+                    <p class="text-lg text-gray-600 mt-2">Upload your resume to get AI-powered feedback and job matches.</p>
+                </header>
+
+                <!-- This 'main' card is your existing application content -->
+                <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 w-full max-w-4xl mx-auto">
+                    
+                    <!-- Upload Section -->
+                    <section id="upload-section">
+                        <form id="resume-form" class="space-y-6">
+                            <div>
+                                <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Resume:</label>
+                                <div id="file-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all duration-300 ease-in-out">
+                                    <div class="space-y-1 text-center py-4">
+                                        <i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
+                                        <div class="flex text-sm text-gray-600">
+                                            <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                                <span>Upload a file</span>
+                                                <input id="file-upload" name="resume" type="file" class="sr-only" accept=".pdf,.txt">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500">PDF or TXT up to 10MB</p>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-gray-500">PDF or TXT up to 10MB</p>
+                            </div>
+                            <div id="file-info" class="text-sm text-gray-700 hidden">
+                                <strong>Selected file:</strong> <span id="file-name"></span>
+                            </div>
+                            <div id="error-message" class="text-sm text-red-600 font-medium hidden"></div>
+                            <div>
+                                <button type="submit" id="analyze-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 ease-in-out" disabled>
+                                    <i data-lucide="loader-2" id="spinner" class="spinner h-5 w-5 mr-2 hidden"></i>
+                                    <span id="button-text">Analyze Resume</span>
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Results Section -->
+                    <section id="results-section" class="hidden mt-10">
+                        
+                        <!-- AI Summary Section -->
+                        <div id="ai-summary-container" class="mb-8">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <i data-lucide="sparkles" class="h-6 w-6 mr-2 text-indigo-600"></i>
+                                AI Professional Summary
+                            </h2>
+                            <div id="ai-summary-content" class="ai-content text-gray-700">
+                                <p>Generating summary...</p>
                             </div>
                         </div>
-                    </div>
-                    <div id="file-info" class="text-sm text-gray-700 hidden">
-                        <strong>Selected file:</strong> <span id="file-name"></span>
-                    </div>
-                    <div id="error-message" class="text-sm text-red-600 font-medium hidden"></div>
-                    <div>
-                        <button type="submit" id="analyze-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 ease-in-out" disabled>
-                            <i data-lucide="loader-2" id="spinner" class="spinner h-5 w-5 mr-2 hidden"></i>
-                            <span id="button-text">Analyze Resume</span>
-                        </button>
-                    </div>
-                </form>
-            </section>
 
-            <!-- Results Section -->
-            <section id="results-section" class="hidden mt-10">
-                
-                <!-- ---!! NEW: AI Summary Section !!--- -->
-                <div id="ai-summary-container" class="mb-8">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <i data-lucide="sparkles" class="h-6 w-6 mr-2 text-indigo-600"></i>
-                        AI Professional Summary
-                    </h2>
-                    <div id="ai-summary-content" class="ai-content text-gray-700">
-                        <p>Generating summary...</p>
-                    </div>
-                </div>
-
-                <!-- Resume Skills -->
-                <div id="resume-skills-container" class="mb-8">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Skills Found in Your Resume</h2>
-                    <div id="resume-skills-list" class="flex flex-wrap gap-2">
-                        <p class="text-gray-500">No specific skills from our database were found.</p>
-                    </div>
-                </div>
-
-                <!-- Top Matches -->
-                <div>
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Job Matches</h2>
-                    
-                    <!-- ---!! NEW: AI Match Explanation !!--- -->
-                    <div id="ai-match-container" class="mb-6 hidden">
-                         <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
-                            <i data-lucide="target" class="h-5 w-5 mr-2 text-green-600"></i>
-                            Why You're a Top Match for This Job
-                        </h3>
-                        <div id="ai-match-content" class="ai-content text-gray-700">
-                            <p>Generating explanation...</p>
+                        <!-- Resume Skills -->
+                        <div id="resume-skills-container" class="mb-8">
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Skills Found in Your Resume</h2>
+                            <div id="resume-skills-list" class="flex flex-wrap gap-2">
+                                <p class="text-gray-500">No specific skills from our database were found.</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="job-list" class="space-y-4">
-                        <!-- Job cards will be dynamically inserted here -->
-                    </div>
-                    <p id="no-jobs-message" class="text-gray-500 hidden">No matching jobs found.</p>
+                        <!-- Top Matches -->
+                        <div>
+                            <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Job Matches</h2>
+                            
+                            <!-- AI Match Explanation -->
+                            <div id="ai-match-container" class="mb-6 hidden">
+                                 <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                                    <i data-lucide="target" class="h-5 w-5 mr-2 text-green-600"></i>
+                                    Why You're a Top Match
+                                </h3>
+                                <div id="ai-match-content" class="ai-content text-gray-700">
+                                    <p>Generating explanation...</p>
+                                </div>
+                            </div>
+
+                            <div id="job-list" class="space-y-4">
+                                <!-- Job cards will be dynamically inserted here -->
+                            </div>
+                            <p id="no-jobs-message" class="text-gray-500 hidden">No matching jobs found.</p>
+                        </div>
+                        
+                        <!-- Analyze Another Button -->
+                        <div class="mt-8 text-center">
+                            <button id="reset-button" class="py-2 px-6 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                                Analyze Another Resume
+                            </button>
+                        </div>
+                    </section>
                 </div>
-                
-                <!-- Analyze Another Button -->
-                <div class="mt-8 text-center">
-                    <button id="reset-button" class="py-2 px-6 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Analyze Another Resume
-                    </button>
-                </div>
-            </section>
-        </main>
+            </main>
+        </div>
     </div>
 
-    <!-- JavaScript -->
+    <!-- 
+        ALL YOUR EXISTING, WORKING JAVASCRIPT IS BELOW.
+        NO CHANGES WERE MADE TO THE LOGIC.
+    -->
     <script>
-        // Immediately replace all `data-lucide` icons
+        // Immediately replace all `data-lucide` icons on the page (including sidebar)
         lucide.createIcons();
 
-        // ---!! NEW: Initialize Markdown converter ---
+        // Initialize Markdown converter
         const converter = new showdown.Converter();
 
         // Get DOM elements
@@ -163,7 +232,7 @@
         const uploadSection = document.getElementById('upload-section');
         const resultsSection = document.getElementById('results-section');
         
-        // ---!! NEW: AI Element Selectors ---
+        // AI Element Selectors
         const aiSummaryContent = document.getElementById('ai-summary-content');
         const aiMatchContainer = document.getElementById('ai-match-container');
         const aiMatchContent = document.getElementById('ai-match-content');
@@ -218,7 +287,7 @@
             handleFileSelect(file);
         });
 
-        // --- Form Submission Handler (Updated) ---
+        // --- Form Submission Handler (Unchanged) ---
         resumeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!selectedFile) return;
@@ -226,11 +295,10 @@
             setLoading(true);
             hideError();
             
-            // ---!! NEW: Reset AI content ---
+            // Reset AI content
             aiSummaryContent.innerHTML = '<p>Generating summary...</p>';
             aiMatchContent.innerHTML = '<p>Generating explanation...</p>';
             aiMatchContainer.classList.add('hidden');
-
 
             const formData = new FormData();
             formData.append('resume', selectedFile);
@@ -263,12 +331,11 @@
             }
         });
 
-        // --- UI Helper Functions (Updated) ---
+        // --- UI Helper Functions (Unchanged) ---
         
         function displayResults(data) {
             
-            // ---!! NEW: 1. Display AI Content ---
-            // Convert Markdown (like *bold* or lists) to HTML
+            // 1. Display AI Content
             aiSummaryContent.innerHTML = converter.makeHtml(data.ai_summary || "Could not generate AI summary.");
             if (data.ai_match_explanation) {
                 aiMatchContent.innerHTML = converter.makeHtml(data.ai_match_explanation);
@@ -303,10 +370,9 @@
             lucide.createIcons();
         }
 
-        // (createJobCard, setLoading, showError, hideError remain the same)
         function createJobCard(job) {
             const card = document.createElement('div');
-            card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white';
+            card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white hover:shadow-md transition-shadow duration-300'; // Added hover effect
 
             const scorePercent = Math.round(job.score);
             const scoreColor = scorePercent > 80 ? 'text-green-600' : scorePercent > 60 ? 'text-yellow-600' : 'text-red-600';
@@ -370,7 +436,7 @@
             errorMessage.classList.add('hidden');
         }
 
-        // --- Reset Button Handler (Updated) ---
+        // --- Reset Button Handler (Unchanged) ---
         resetButton.addEventListener('click', () => {
             selectedFile = null;
             fileUpload.value = ""; 
@@ -387,7 +453,7 @@
             jobList.innerHTML = '';
             resumeSkillsList.innerHTML = '';
             
-            // ---!! NEW: Clear AI content ---
+            // Clear AI content
             aiSummaryContent.innerHTML = '';
             aiMatchContent.innerHTML = '';
         });
