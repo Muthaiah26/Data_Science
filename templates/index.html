@@ -8,10 +8,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Load Lucide icons -->
     <script src="https://unpkg.com/lucide-react@latest/dist/lucide.js"></script>
+    <!-- ---!! NEW: Load Showdown.js to render Markdown --- -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
-        /* Simple keyframe for spinner */
+        /* (Spinner and scrollbar styles remain the same) */
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -19,19 +20,27 @@
         .spinner {
             animation: spin 1s linear infinite;
         }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        /* ---!! NEW: Styles for AI-generated content --- */
+        .ai-content {
+            border-left: 4px solid #4f46e5; /* indigo-600 */
+            padding-left: 1rem;
+            margin-top: 1rem;
+            background-color: #fafafa; /* gray-50 */
+            padding: 1rem;
+            border-radius: 0.5rem;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9; /* gray-100 */
+        .ai-content ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #94a3b8; /* gray-400 */
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #64748b; /* gray-500 */
+        .ai-content p {
+            margin-bottom: 0.5rem;
         }
     </style>
 </head>
@@ -41,18 +50,17 @@
         <!-- Header -->
         <header class="text-center mb-8">
             <h1 class="text-3xl md:text-4xl font-bold text-gray-800">AI Resume Analyzer</h1>
-            <p class="text-lg text-gray-600 mt-2">Upload your resume (PDF or TXT) to find your top job matches.</p>
+            <p class="text-lg text-gray-600 mt-2">Upload your resume (PDF or TXT) to get AI-powered feedback and job matches.</p>
         </header>
 
         <!-- Main Content -->
         <main class="bg-white rounded-lg shadow-xl p-6 md:p-8">
             
-            <!-- Upload Section -->
+            <!-- (Upload Section remains the same) -->
             <section id="upload-section">
                 <form id="resume-form" class="space-y-6">
                     <div>
                         <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Resume:</label>
-                        <!-- File Dropzone -->
                         <div id="file-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all duration-300 ease-in-out">
                             <div class="space-y-1 text-center py-4">
                                 <i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
@@ -67,17 +75,12 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- File Info / Error Message -->
                     <div id="file-info" class="text-sm text-gray-700 hidden">
                         <strong>Selected file:</strong> <span id="file-name"></span>
                     </div>
                     <div id="error-message" class="text-sm text-red-600 font-medium hidden"></div>
-
-                    <!-- Submit Button -->
                     <div>
                         <button type="submit" id="analyze-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 ease-in-out" disabled>
-                            <!-- Spinner icon, hidden by default -->
                             <i data-lucide="loader-2" id="spinner" class="spinner h-5 w-5 mr-2 hidden"></i>
                             <span id="button-text">Analyze Resume</span>
                         </button>
@@ -88,11 +91,21 @@
             <!-- Results Section -->
             <section id="results-section" class="hidden mt-10">
                 
+                <!-- ---!! NEW: AI Summary Section !!--- -->
+                <div id="ai-summary-container" class="mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i data-lucide="sparkles" class="h-6 w-6 mr-2 text-indigo-600"></i>
+                        AI Professional Summary
+                    </h2>
+                    <div id="ai-summary-content" class="ai-content text-gray-700">
+                        <p>Generating summary...</p>
+                    </div>
+                </div>
+
                 <!-- Resume Skills -->
                 <div id="resume-skills-container" class="mb-8">
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Skills Found in Your Resume</h2>
                     <div id="resume-skills-list" class="flex flex-wrap gap-2">
-                        <!-- Skills will be dynamically inserted here -->
                         <p class="text-gray-500">No specific skills from our database were found.</p>
                     </div>
                 </div>
@@ -100,6 +113,18 @@
                 <!-- Top Matches -->
                 <div>
                     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Job Matches</h2>
+                    
+                    <!-- ---!! NEW: AI Match Explanation !!--- -->
+                    <div id="ai-match-container" class="mb-6 hidden">
+                         <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
+                            <i data-lucide="target" class="h-5 w-5 mr-2 text-green-600"></i>
+                            Why You're a Top Match for This Job
+                        </h3>
+                        <div id="ai-match-content" class="ai-content text-gray-700">
+                            <p>Generating explanation...</p>
+                        </div>
+                    </div>
+
                     <div id="job-list" class="space-y-4">
                         <!-- Job cards will be dynamically inserted here -->
                     </div>
@@ -121,6 +146,9 @@
         // Immediately replace all `data-lucide` icons
         lucide.createIcons();
 
+        // ---!! NEW: Initialize Markdown converter ---
+        const converter = new showdown.Converter();
+
         // Get DOM elements
         const resumeForm = document.getElementById('resume-form');
         const fileUpload = document.getElementById('file-upload');
@@ -134,6 +162,12 @@
         
         const uploadSection = document.getElementById('upload-section');
         const resultsSection = document.getElementById('results-section');
+        
+        // ---!! NEW: AI Element Selectors ---
+        const aiSummaryContent = document.getElementById('ai-summary-content');
+        const aiMatchContainer = document.getElementById('ai-match-container');
+        const aiMatchContent = document.getElementById('ai-match-content');
+        
         const resumeSkillsList = document.getElementById('resume-skills-list');
         const jobList = document.getElementById('job-list');
         const noJobsMessage = document.getElementById('no-jobs-message');
@@ -141,83 +175,62 @@
         
         let selectedFile = null;
 
-        // --- File Input Handlers ---
-        
+        // --- File Input Handlers (Unchanged) ---
         function handleFileSelect(file) {
-            // ---!! NEW LOGGING !!---
-            console.log("handleFileSelect triggered.");
-
             if (file) {
                 const fName = file.name.toLowerCase();
-                console.log("File selected:", fName); // Log file name
-
                 if (!fName.endsWith('.pdf') && !fName.endsWith('.txt')) {
-                    console.error("Invalid file type."); // Log error
                     showError("Invalid file type. Please upload a PDF or TXT.");
                     fileUpload.value = ""; 
                     selectedFile = null;
-                    analyzeButton.disabled = true; // ---!! ADDED: Ensure button is disabled on error ---
+                    analyzeButton.disabled = true;
                     return;
                 }
-                
                 if (file.size > 10 * 1024 * 1024) { // 10MB limit
-                    console.error("File too large."); // Log error
                     showError("File is too large. Maximum size is 10MB.");
                     fileUpload.value = "";
                     selectedFile = null;
-                    analyzeButton.disabled = true; // ---!! ADDED: Ensure button is disabled on error ---
+                    analyzeButton.disabled = true;
                     return;
                 }
-                
-                console.log("File is valid, enabling button."); // Log success
                 selectedFile = file;
                 fileNameEl.textContent = file.name; 
                 fileInfo.classList.remove('hidden');
                 analyzeButton.disabled = false; 
                 fileDropzone.classList.add('border-indigo-600');
                 hideError();
-            } else {
-                console.log("No file selected.");
             }
         }
-
-        fileUpload.addEventListener('change', (e) => {
-            handleFileSelect(e.target.files[0]);
-        });
-
-        // --- Drag and Drop Handlers ---
-        
+        fileUpload.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
         fileDropzone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             fileDropzone.classList.add('border-indigo-600', 'bg-indigo-50');
         });
-
         fileDropzone.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             fileDropzone.classList.remove('border-indigo-600', 'bg-indigo-50');
         });
-
         fileDropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            e.preventDefault(); e.stopPropagation();
             fileDropzone.classList.remove('border-indigo-600', 'bg-indigo-50');
             const file = e.dataTransfer.files[0];
             fileUpload.files = e.dataTransfer.files; 
             handleFileSelect(file);
         });
 
-        // --- Form Submission Handler ---
-        
+        // --- Form Submission Handler (Updated) ---
         resumeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!selectedFile) return;
 
-            // ---!! NEW LOGGING !!---
-            console.log("Form submitted. Starting fetch request to /analyze");
             setLoading(true);
             hideError();
+            
+            // ---!! NEW: Reset AI content ---
+            aiSummaryContent.innerHTML = '<p>Generating summary...</p>';
+            aiMatchContent.innerHTML = '<p>Generating explanation...</p>';
+            aiMatchContainer.classList.add('hidden');
+
 
             const formData = new FormData();
             formData.append('resume', selectedFile);
@@ -228,45 +241,42 @@
                     body: formData,
                 });
 
-                // ---!! NEW LOGGING !!---
-                console.log("Server response received. Status:", response.status);
-
                 const data = await response.json();
-                
-                // ---!! NEW LOGGING !!---
-                console.log("Response JSON parsed:", data);
 
                 if (!response.ok) {
-                    // ---!! NEW LOGGING !!---
-                    console.error("Server responded with an error:", data.error);
                     throw new Error(data.error || `Server error: ${response.status}`);
                 }
                 
-                console.log("Displaying results."); // Log success
                 displayResults(data);
                 uploadSection.classList.add('hidden');
                 resultsSection.classList.remove('hidden');
 
             } catch (err) {
-                // ---!! NEW, MORE DETAILED LOGGING !!---
-                console.error("Fetch request failed. Full error object:", err);
+                console.error("Fetch Error:", err);
                 if (err.name === 'SyntaxError') {
-                    // This happens if the server returns HTML (like an error page) instead of JSON
-                    console.error("This is likely a JSON parsing error. The server did not return valid JSON. Check the 'Network' tab to see the server's actual response (it's probably an HTML error page).");
                     showError("An unexpected server error occurred. Check the server terminal for details.");
                 } else {
-                    showError(err.message); // Show the error message from the server
+                    showError(err.message);
                 }
             } finally {
                 setLoading(false);
             }
         });
 
-        // --- UI Helper Functions ---
+        // --- UI Helper Functions (Updated) ---
         
         function displayResults(data) {
-            // (This function is unchanged)
-            resumeSkillsList.innerHTML = ''; 
+            
+            // ---!! NEW: 1. Display AI Content ---
+            // Convert Markdown (like *bold* or lists) to HTML
+            aiSummaryContent.innerHTML = converter.makeHtml(data.ai_summary || "Could not generate AI summary.");
+            if (data.ai_match_explanation) {
+                aiMatchContent.innerHTML = converter.makeHtml(data.ai_match_explanation);
+                aiMatchContainer.classList.remove('hidden');
+            }
+
+            // 2. Display Resume Skills
+            resumeSkillsList.innerHTML = '';
             if (data.resume_skills && data.resume_skills.length > 0) {
                 data.resume_skills.forEach(skill => {
                     const skillTag = document.createElement('span');
@@ -278,7 +288,8 @@
                 resumeSkillsList.innerHTML = '<p class="text-gray-500">No specific skills from our database were found.</p>';
             }
 
-            jobList.innerHTML = ''; 
+            // 3. Display Job Matches
+            jobList.innerHTML = '';
             if (data.jobs && data.jobs.length > 0) {
                 noJobsMessage.classList.add('hidden');
                 data.jobs.forEach(job => {
@@ -288,11 +299,12 @@
             } else {
                 noJobsMessage.classList.remove('hidden');
             }
+            // Re-render icons after adding new elements
             lucide.createIcons();
         }
 
+        // (createJobCard, setLoading, showError, hideError remain the same)
         function createJobCard(job) {
-            // (This function is unchanged)
             const card = document.createElement('div');
             card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white';
 
@@ -358,14 +370,11 @@
             errorMessage.classList.add('hidden');
         }
 
-        // --- Reset Button Handler ---
-        
+        // --- Reset Button Handler (Updated) ---
         resetButton.addEventListener('click', () => {
-            // Reset state
             selectedFile = null;
-            fileUpload.value = ""; // Explicitly clear file input
+            fileUpload.value = ""; 
             
-            // Reset UI
             resultsSection.classList.add('hidden');
             uploadSection.classList.remove('hidden');
             
@@ -377,8 +386,13 @@
             hideError();
             jobList.innerHTML = '';
             resumeSkillsList.innerHTML = '';
+            
+            // ---!! NEW: Clear AI content ---
+            aiSummaryContent.innerHTML = '';
+            aiMatchContent.innerHTML = '';
         });
         
     </script>
 </body>
 </html>
+
