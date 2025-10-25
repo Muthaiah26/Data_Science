@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Top Job Matches</title>
+</head>
+<body class="container mt-5">
+  <h2>Top Matching Jobs</h2>
+  <ul>
+    {% for job in jobs %}
+      <li><strong>{{ job.title }}</strong> at {{ job.company }} — Score: {{ job.match_score | round(2) }}</li>
+    {% endfor %}
+  </ul>
+  <a href="/" class="btn btn-secondary mt-3">Try Another Resume</a>
+</body>
+</html>

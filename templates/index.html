@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Analyzer</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Lucide icons -->
+    <script src="https://unpkg.com/lucide-react@latest/dist/lucide.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Simple keyframe for spinner */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; /* gray-100 */
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8; /* gray-400 */
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; /* gray-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased">
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">AI Resume Analyzer</h1>
+            <p class="text-lg text-gray-600 mt-2">Upload your resume (PDF or TXT) to find your top job matches.</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="bg-white rounded-lg shadow-xl p-6 md:p-8">
+            
+            <!-- Upload Section -->
+            <section id="upload-section">
+                <form id="resume-form" class="space-y-6">
+                    <div>
+                        <label for="file-upload" class="block text-sm font-medium text-gray-700 mb-2">Upload Resume:</label>
+                        <!-- File Dropzone -->
+                        <div id="file-dropzone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md transition-all duration-300 ease-in-out">
+                            <div class="space-y-1 text-center py-4">
+                                <i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                                        <span>Upload a file</span>
+                                        <input id="file-upload" name="resume" type="file" class="sr-only" accept=".pdf,.txt">
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">PDF or TXT up to 10MB</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- File Info / Error Message -->
+                    <div id="file-info" class="text-sm text-gray-700 hidden">
+                        <strong>Selected file:</strong> <span id="file-name"></span>
+                    </div>
+                    <div id="error-message" class="text-sm text-red-600 font-medium hidden"></div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" id="analyze-button" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed transition-all duration-300 ease-in-out" disabled>
+                            <!-- Spinner icon, hidden by default -->
+                            <i data-lucide="loader-2" id="spinner" class="spinner h-5 w-5 mr-2 hidden"></i>
+                            <span id="button-text">Analyze Resume</span>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Results Section -->
+            <section id="results-section" class="hidden mt-10">
+                
+                <!-- Resume Skills -->
+                <div id="resume-skills-container" class="mb-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Skills Found in Your Resume</h2>
+                    <div id="resume-skills-list" class="flex flex-wrap gap-2">
+                        <!-- Skills will be dynamically inserted here -->
+                        <p class="text-gray-500">No specific skills from our database were found.</p>
+                    </div>
+                </div>
+
+                <!-- Top Matches -->
+                <div>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Job Matches</h2>
+                    <div id="job-list" class="space-y-4">
+                        <!-- Job cards will be dynamically inserted here -->
+                    </div>
+                    <p id="no-jobs-message" class="text-gray-500 hidden">No matching jobs found.</p>
+                </div>
+                
+                <!-- Analyze Another Button -->
+                <div class="mt-8 text-center">
+                    <button id="reset-button" class="py-2 px-6 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Analyze Another Resume
+                    </button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Immediately replace all `data-lucide` icons
+        lucide.createIcons();
+
+        // Get DOM elements
+        const resumeForm = document.getElementById('resume-form');
+        const fileUpload = document.getElementById('file-upload');
+        const fileDropzone = document.getElementById('file-dropzone');
+        const fileInfo = document.getElementById('file-info');
+        const fileNameEl = document.getElementById('file-name'); 
+        const analyzeButton = document.getElementById('analyze-button');
+        const buttonText = document.getElementById('button-text');
+        const spinner = document.getElementById('spinner');
+        const errorMessage = document.getElementById('error-message');
+        
+        const uploadSection = document.getElementById('upload-section');
+        const resultsSection = document.getElementById('results-section');
+        const resumeSkillsList = document.getElementById('resume-skills-list');
+        const jobList = document.getElementById('job-list');
+        const noJobsMessage = document.getElementById('no-jobs-message');
+        const resetButton = document.getElementById('reset-button');
+        
+        let selectedFile = null;
+
+        // --- File Input Handlers ---
+        
+        function handleFileSelect(file) {
+            // ---!! NEW LOGGING !!---
+            console.log("handleFileSelect triggered.");
+
+            if (file) {
+                const fName = file.name.toLowerCase();
+                console.log("File selected:", fName); // Log file name
+
+                if (!fName.endsWith('.pdf') && !fName.endsWith('.txt')) {
+                    console.error("Invalid file type."); // Log error
+                    showError("Invalid file type. Please upload a PDF or TXT.");
+                    fileUpload.value = ""; 
+                    selectedFile = null;
+                    analyzeButton.disabled = true; // ---!! ADDED: Ensure button is disabled on error ---
+                    return;
+                }
+                
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    console.error("File too large."); // Log error
+                    showError("File is too large. Maximum size is 10MB.");
+                    fileUpload.value = "";
+                    selectedFile = null;
+                    analyzeButton.disabled = true; // ---!! ADDED: Ensure button is disabled on error ---
+                    return;
+                }
+                
+                console.log("File is valid, enabling button."); // Log success
+                selectedFile = file;
+                fileNameEl.textContent = file.name; 
+                fileInfo.classList.remove('hidden');
+                analyzeButton.disabled = false; 
+                fileDropzone.classList.add('border-indigo-600');
+                hideError();
+            } else {
+                console.log("No file selected.");
+            }
+        }
+
+        fileUpload.addEventListener('change', (e) => {
+            handleFileSelect(e.target.files[0]);
+        });
+
+        // --- Drag and Drop Handlers ---
+        
+        fileDropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileDropzone.classList.add('border-indigo-600', 'bg-indigo-50');
+        });
+
+        fileDropzone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileDropzone.classList.remove('border-indigo-600', 'bg-indigo-50');
+        });
+
+        fileDropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            fileDropzone.classList.remove('border-indigo-600', 'bg-indigo-50');
+            const file = e.dataTransfer.files[0];
+            fileUpload.files = e.dataTransfer.files; 
+            handleFileSelect(file);
+        });
+
+        // --- Form Submission Handler ---
+        
+        resumeForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedFile) return;
+
+            // ---!! NEW LOGGING !!---
+            console.log("Form submitted. Starting fetch request to /analyze");
+            setLoading(true);
+            hideError();
+
+            const formData = new FormData();
+            formData.append('resume', selectedFile);
+
+            try {
+                const response = await fetch('/analyze', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                // ---!! NEW LOGGING !!---
+                console.log("Server response received. Status:", response.status);
+
+                const data = await response.json();
+                
+                // ---!! NEW LOGGING !!---
+                console.log("Response JSON parsed:", data);
+
+                if (!response.ok) {
+                    // ---!! NEW LOGGING !!---
+                    console.error("Server responded with an error:", data.error);
+                    throw new Error(data.error || `Server error: ${response.status}`);
+                }
+                
+                console.log("Displaying results."); // Log success
+                displayResults(data);
+                uploadSection.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+
+            } catch (err) {
+                // ---!! NEW, MORE DETAILED LOGGING !!---
+                console.error("Fetch request failed. Full error object:", err);
+                if (err.name === 'SyntaxError') {
+                    // This happens if the server returns HTML (like an error page) instead of JSON
+                    console.error("This is likely a JSON parsing error. The server did not return valid JSON. Check the 'Network' tab to see the server's actual response (it's probably an HTML error page).");
+                    showError("An unexpected server error occurred. Check the server terminal for details.");
+                } else {
+                    showError(err.message); // Show the error message from the server
+                }
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // --- UI Helper Functions ---
+        
+        function displayResults(data) {
+            // (This function is unchanged)
+            resumeSkillsList.innerHTML = ''; 
+            if (data.resume_skills && data.resume_skills.length > 0) {
+                data.resume_skills.forEach(skill => {
+                    const skillTag = document.createElement('span');
+                    skillTag.className = 'px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-medium rounded-full';
+                    skillTag.textContent = skill;
+                    resumeSkillsList.appendChild(skillTag);
+                });
+            } else {
+                resumeSkillsList.innerHTML = '<p class="text-gray-500">No specific skills from our database were found.</p>';
+            }
+
+            jobList.innerHTML = ''; 
+            if (data.jobs && data.jobs.length > 0) {
+                noJobsMessage.classList.add('hidden');
+                data.jobs.forEach(job => {
+                    const jobCard = createJobCard(job);
+                    jobList.appendChild(jobCard);
+                });
+            } else {
+                noJobsMessage.classList.remove('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        function createJobCard(job) {
+            // (This function is unchanged)
+            const card = document.createElement('div');
+            card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white';
+
+            const scorePercent = Math.round(job.score);
+            const scoreColor = scorePercent > 80 ? 'text-green-600' : scorePercent > 60 ? 'text-yellow-600' : 'text-red-600';
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-lg font-semibold text-indigo-700">${job.title}</h3>
+                        <p class="text-md text-gray-600">${job.company}</p>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-4">
+                        <span class="text-xl font-bold ${scoreColor}">${scorePercent}%</span>
+                        <p class="text-sm text-gray-500">Match</p>
+                    </div>
+                </div>
+                ${(job.matched_skills.length > 0 || job.missing_skills.length > 0) ? `
+                <div class="mt-4 pt-4 border-t border-gray-100">
+                    ${job.matched_skills.length > 0 ? `
+                    <div class="mb-2">
+                        <h4 class="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <i data-lucide="check-circle" class="h-4 w-4 mr-1 text-green-500"></i>
+                            Skills You Have
+                        </h4>
+                        <div class="flex flex-wrap gap-1">
+                            ${job.matched_skills.map(skill => `<span class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-medium rounded-full">${skill}</span>`).join('')}
+                        </div>
+                    </div>` : ''}
+                    ${job.missing_skills.length > 0 ? `
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <i data-lucide="alert-circle" class="h-4 w-4 mr-1 text-yellow-500"></i>
+                            Skills to Develop
+                        </h4>
+                        <div class="flex flex-wrap gap-1">
+                            ${job.missing_skills.map(skill => `<span class="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">${skill}</span>`).join('')}
+                        </div>
+                    </div>` : ''}
+                </div>` : ''}
+            `;
+            return card;
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                analyzeButton.disabled = true;
+                spinner.classList.remove('hidden');
+                buttonText.textContent = 'Analyzing...';
+            } else {
+                analyzeButton.disabled = false;
+                spinner.classList.add('hidden');
+                buttonText.textContent = 'Analyze Resume';
+            }
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        // --- Reset Button Handler ---
+        
+        resetButton.addEventListener('click', () => {
+            // Reset state
+            selectedFile = null;
+            fileUpload.value = ""; // Explicitly clear file input
+            
+            // Reset UI
+            resultsSection.classList.add('hidden');
+            uploadSection.classList.remove('hidden');
+            
+            resumeForm.reset(); 
+            fileInfo.classList.add('hidden');
+            fileNameEl.textContent = ''; 
+            analyzeButton.disabled = true;
+            fileDropzone.classList.remove('border-indigo-600');
+            hideError();
+            jobList.innerHTML = '';
+            resumeSkillsList.innerHTML = '';
+        });
+        
+    </script>
+</body>
+</html>
