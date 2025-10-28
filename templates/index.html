@@ -331,9 +331,14 @@
             }
         });
 
+       
+
         // --- UI Helper Functions (Unchanged) ---
         
         function displayResults(data) {
+
+
+
             
             // 1. Display AI Content
             aiSummaryContent.innerHTML = converter.makeHtml(data.ai_summary || "Could not generate AI summary.");
@@ -414,6 +419,8 @@
             `;
             return card;
         }
+        
+
 
         function setLoading(isLoading) {
             if (isLoading) {
