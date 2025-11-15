@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Resume Dashboard</title>
-    <!-- Load Tailwind CSS -->
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Lucide icons -->
+   
     <script src="https://unpkg.com/lucide-react@latest/dist/lucide.js"></script>
 
-    <!-- Load Showdown.js to render Markdown -->
+   
     <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
       <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* (Spinner and scrollbar styles remain the same) */
+       
         @keyframes spin {
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
@@ -26,7 +26,6 @@
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-        /* Styles for AI-generated content */
         .ai-content {
             border-left: 4px solid #4f46e5; /* indigo-600 */
             padding-left: 1rem;
@@ -46,25 +45,22 @@
             line-height: 1.75;
         }
         .ai-content strong {
-            color: #1f2937; /* gray-800 */
+            color: #1f2937; 
         }
     </style>
 </head>
 <body class="bg-gray-100 font-sans antialiased">
 
-    <!-- This flex container is the main layout wrapper -->
     <div class="flex h-screen bg-gray-100">
 
-        <!-- Sidebar (Visible on medium screens and up) -->
         <aside class="hidden md:flex md:flex-shrink-0 w-64 flex-col bg-gray-800 text-white">
             <div class="flex flex-col flex-grow">
-                <!-- Sidebar Header/Logo -->
+
                 <div class="flex items-center h-16 flex-shrink-0 px-6 bg-gray-900">
                     <i data-lucide="scan-line" class="h-8 w-8 text-indigo-400"></i>
                     <span class="ml-3 text-xl font-semibold">AI Resume Pro</span>
                 </div>
-                
-                <!-- Navigation Links -->
+      
                 <nav class="flex-1 px-4 py-4 space-y-2">
                     <a href="#" class="flex items-center px-4 py-3 rounded-lg bg-gray-700 text-white">
                         <i data-lucide="layout-dashboard" class="h-5 w-5 mr-3"></i>
@@ -81,7 +77,7 @@
                 </nav>
             </div>
             
-            <!-- User Profile Section at Bottom -->
+         
             <div class="flex-shrink-0 p-4 border-t border-gray-700">
                 <a href="#" class="flex items-center group">
                     <img class="h-10 w-10 rounded-full" src="https://placehold.co/100x100/6366f1/white?text=User" alt="User Avatar">
@@ -93,34 +89,29 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden">
             
-            <!-- Mobile Header (Visible on small screens) -->
+          
             <header class="md:hidden flex items-center justify-between h-16 bg-white border-b border-gray-200 px-4">
                 <div class="flex items-center">
                     <i data-lucide="scan-line" class="h-7 w-7 text-indigo-600"></i>
                     <span class="ml-2 text-lg font-semibold text-gray-800">AI Resume Pro</span>
                 </div>
-                <!-- Mobile menu button (can be wired up later) -->
+              
                 <button class="text-gray-500 hover:text-gray-600">
                     <i data-lucide="menu" class="h-6 w-6"></i>
                 </button>
             </header>
 
-            <!-- Scrollable Content -->
             <main class="flex-1 overflow-y-auto p-4 md:p-8">
                 
-                <!-- Page Header -->
                 <header class="mb-8">
                     <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
                     <p class="text-lg text-gray-600 mt-2">Upload your resume to get AI-powered feedback and job matches.</p>
                 </header>
 
-                <!-- This 'main' card is your existing application content -->
                 <div class="bg-white rounded-lg shadow-xl p-6 md:p-8 w-full max-w-4xl mx-auto">
                     
-                    <!-- Upload Section -->
                     <section id="upload-section">
                         <form id="resume-form" class="space-y-6">
                             <div>
@@ -152,10 +143,8 @@
                         </form>
                     </section>
 
-                    <!-- Results Section -->
                     <section id="results-section" class="hidden mt-10">
                         
-                        <!-- AI Summary Section -->
                         <div id="ai-summary-container" class="mb-8">
                             <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                                 <i data-lucide="sparkles" class="h-6 w-6 mr-2 text-indigo-600"></i>
@@ -166,7 +155,6 @@
                             </div>
                         </div>
 
-                        <!-- Resume Skills -->
                         <div id="resume-skills-container" class="mb-8">
                             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Skills Found in Your Resume</h2>
                             <div id="resume-skills-list" class="flex flex-wrap gap-2">
@@ -174,11 +162,9 @@
                             </div>
                         </div>
 
-                        <!-- Top Matches -->
                         <div>
                             <h2 class="text-2xl font-semibold text-gray-800 mb-4">Top Job Matches</h2>
                             
-                            <!-- AI Match Explanation -->
                             <div id="ai-match-container" class="mb-6 hidden">
                                  <h3 class="text-lg font-semibold text-gray-700 mb-2 flex items-center">
                                     <i data-lucide="target" class="h-5 w-5 mr-2 text-green-600"></i>
@@ -190,12 +176,12 @@
                             </div>
 
                             <div id="job-list" class="space-y-4">
-                                <!-- Job cards will be dynamically inserted here -->
+                               
                             </div>
                             <p id="no-jobs-message" class="text-gray-500 hidden">No matching jobs found.</p>
                         </div>
                         
-                        <!-- Analyze Another Button -->
+                      
                         <div class="mt-8 text-center">
                             <button id="reset-button" class="py-2 px-6 border border-indigo-600 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Analyze Another Resume
@@ -207,23 +193,17 @@
         </div>
     </div>
 
-    <!-- 
-        ALL YOUR EXISTING, WORKING JAVASCRIPT IS BELOW.
-        NO CHANGES WERE MADE TO THE LOGIC.
-    -->
+    
     <script>
-        // Immediately replace all `data-lucide` icons on the page (including sidebar)
         lucide.createIcons();
 
-        // Initialize Markdown converter
         const converter = new showdown.Converter({
-            // Add options to make newlines work like <br>
+ 
             simpleLineBreaks: true, 
-            // Add options to correctly format lists
+           
             requireSpaceBeforeHeading: true
         });
 
-        // Get DOM elements
         const resumeForm = document.getElementById('resume-form');
         const fileUpload = document.getElementById('file-upload');
         const fileDropzone = document.getElementById('file-dropzone');
@@ -236,8 +216,7 @@
         
         const uploadSection = document.getElementById('upload-section');
         const resultsSection = document.getElementById('results-section');
-        
-        // AI Element Selectors
+       
         const aiSummaryContent = document.getElementById('ai-summary-content');
         const aiMatchContainer = document.getElementById('ai-match-container');
         const aiMatchContent = document.getElementById('ai-match-content');
@@ -249,7 +228,6 @@
         
         let selectedFile = null;
 
-        // --- File Input Handlers (Unchanged) ---
         function handleFileSelect(file) {
             if (file) {
                 const fName = file.name.toLowerCase();
@@ -292,7 +270,6 @@
             handleFileSelect(file);
         });
 
-        // --- Form Submission Handler (Unchanged) ---
         resumeForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!selectedFile) return;
@@ -300,7 +277,6 @@
             setLoading(true);
             hideError();
             
-            // Reset AI content
             aiSummaryContent.innerHTML = '<p>Generating summary...</p>';
             aiMatchContent.innerHTML = '<p>Generating explanation...</p>';
             aiMatchContainer.classList.add('hidden');
@@ -337,27 +313,15 @@
         });
 
         
-        // ------------------------------------------------------------------
-        // --- ⬇️ ALL FIXES ARE IN THE FUNCTIONS BELOW ⬇️ ---
-        // ------------------------------------------------------------------
-
-
-        /**
-         * ✅ **FIXED**
-         * This function now correctly parses your API's JSON response.
-         */
+       
         function displayResults(data) {
-            
-            // 1. Display AI Content
-            // This part was correct, but added showdown.js formatting
+
             aiSummaryContent.innerHTML = converter.makeHtml(data.ai_summary || "Could not generate AI summary.");
             if (data.ai_match_explanation) {
                 aiMatchContent.innerHTML = converter.makeHtml(data.ai_match_explanation);
                 aiMatchContainer.classList.remove('hidden');
             }
 
-            // 2. Display Resume Skills
-            // This part was correct
             resumeSkillsList.innerHTML = '';
             if (data.resume_skills && data.resume_skills.length > 0) {
                 data.resume_skills.forEach(skill => {
@@ -370,14 +334,13 @@
                 resumeSkillsList.innerHTML = '<p class="text-gray-500">No specific skills from our database were found.</p>';
             }
 
-            // 3. Display Job Matches
-            // **FIX:** Changed 'data.jobs' to 'data.matched_jobs'
+          
             jobList.innerHTML = '';
             if (data.matched_jobs && data.matched_jobs.length > 0) {
                 noJobsMessage.classList.add('hidden');
-                // **FIX:** Changed 'data.jobs' to 'data.matched_jobs'
+              
                 data.matched_jobs.forEach(job => {
-                    // This helper function is also new/fixed
+                   
                     const jobCard = createJobCard(job); 
                     jobList.appendChild(jobCard);
                 });
@@ -385,32 +348,25 @@
                 noJobsMessage.classList.remove('hidden');
             }
             
-            // Re-render icons after adding new elements
+           
             lucide.createIcons();
         }
 
-        /**
-         * ✅ **FIXED**
-         * This function is rewritten to use the correct keys from your job objects:
-         * - `job.final_score` (not job.score)
-         * - `job.title`, `job.company`, `job.location`
-         * - `job.description_clean`
-         * - `job.skills_list` (instead of the non-existent matched_skills/missing_skills)
-         */
+       
         function createJobCard(job) {
             const card = document.createElement('div');
             card.className = 'border border-gray-200 rounded-lg p-5 shadow-sm bg-white hover:shadow-md transition-shadow duration-300';
 
-            // **FIX:** Use 'job.final_score' and multiply by 100
+           
             const scorePercent = Math.round(job.final_score * 100);
             const scoreColor = scorePercent > 80 ? 'text-green-600' : scorePercent > 45 ? 'text-yellow-600' : 'text-red-600';
 
-            // **NEW:** Create HTML for the skills *in* the job listing
+            
             const jobSkillsHtml = job.skills_list.map(skill => 
                 `<span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">${skill}</span>`
             ).join(' ');
 
-            // **FIX:** Rebuilt the card HTML to use correct data
+           
             card.innerHTML = `
                 <div class="flex justify-between items-start">
                     <div>
@@ -441,7 +397,7 @@
             return card;
         }
         
-        // --- UI Helper Functions (Unchanged) ---
+        
 
         function setLoading(isLoading) {
             if (isLoading) {
@@ -464,7 +420,6 @@
             errorMessage.classList.add('hidden');
         }
 
-        // --- Reset Button Handler (Unchanged) ---
         resetButton.addEventListener('click', () => {
             selectedFile = null;
             fileUpload.value = ""; 
@@ -481,7 +436,7 @@
             jobList.innerHTML = '';
             resumeSkillsList.innerHTML = '';
             
-            // Clear AI content
+            
             aiSummaryContent.innerHTML = '';
             aiMatchContent.innerHTML = '';
         });

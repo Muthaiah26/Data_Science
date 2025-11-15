@@ -78,22 +78,20 @@ def get_full_job_description(job_url, headers):
         response = requests.get(job_url, headers=headers, timeout=10)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser")
-        
-        # This is the selector you were finding before!
-        # It targets the main description box on the right.
+    
         desc_container = soup.select_one(".jobs-description__container")
         
         if desc_container:
-            # Use .get_text() to extract all text, joining with a space
+          
             return desc_container.get_text(separator=" ", strip=True)
         
-        # Fallback if the first selector fails
+      
         desc_fallback = soup.select_one(".description__text")
         if desc_fallback:
              return desc_fallback.get_text(separator=" ", strip=True)
 
         print(f"Warning: Could not find description container for {job_url}")
-        return ""  # Return empty if no description is found
+        return ""  
         
     except requests.exceptions.RequestException as e:
         print(f"Error scraping full description for {job_url}: {e}")
@@ -273,7 +271,7 @@ def home():
 @app.route('/analyze', methods=['POST'])
 def analyze():
     try:
-        # --- 1. Receive Resume ---
+       
         if 'resume' not in request.files:
             return jsonify({"error": "No resume file provided"}), 400
         file = request.files['resume']
@@ -291,46 +289,43 @@ def analyze():
         if not resume_text:
             return jsonify({"error": "Failed to extract resume text"}), 500
 
-        # --- 2. Extract skills ---
+       
         resume_skills = extract_skills(resume_text, SKILLS_DB)
         resume_clean = clean_text(resume_text)
         resume_vec = model.encode([resume_clean])
 
         if resume_skills:
-            # --- 1. Get the top 3 skills to query individually ---
-            # We take 3 to get a good variety without too many API calls
+            
             top_skills_to_query = resume_skills[:3] 
             print(f"🕵️  Dynamic fetch: Will query for top 3 skills: {top_skills_to_query}")
 
-            all_new_jobs = [] # A list to hold all jobs from all queries
-            
-            # --- 2. Loop over each skill and fetch jobs for it ---
+            all_new_jobs = [] 
             for skill_query in top_skills_to_query:
                 print(f"--- Querying Adzuna for '{skill_query}' ---")
                 try:
-                    # Fetch 5-10 jobs for each skill
+                   
                     new_jobs_for_skill = fetch_adzuna(query=skill_query, location="India", results_per_page=10) 
                     
                     if new_jobs_for_skill:
                         print(f"📥 Found {len(new_jobs_for_skill)} jobs for '{skill_query}'.")
-                        all_new_jobs.extend(new_jobs_for_skill) # Add them to the main list
+                        all_new_jobs.extend(new_jobs_for_skill) 
                     else:
                         print(f"No new jobs found for query: '{skill_query}'")
                 
                 except Exception as e:
-                    # Don't fail the whole request if one skill query fails
+                    
                     print(f"Error during Adzuna fetch for '{skill_query}': {e}")
 
-            # --- 3. Ingest all collected jobs at once ---
+           
             if all_new_jobs:
-                # IMPORTANT: De-duplicate the list, as two skills might return the same job
+               
                 unique_jobs_dict = {job['id']: job for job in all_new_jobs}
                 unique_jobs_list = list(unique_jobs_dict.values())
                 
                 print(f"Total new jobs found: {len(all_new_jobs)}")
                 print(f"Total unique new jobs: {len(unique_jobs_list)}. Ingesting...")
                 
-                # Ingest the unique jobs into Mongo and FAISS
+               
                 ingest_jobs_to_mongo(unique_jobs_list, SKILLS_DB)
             else:
                 print("No new jobs found for any of the top skills.")
@@ -338,7 +333,7 @@ def analyze():
         else:
             print("No resume skills found, skipping dynamic job fetch.")
 
-        # --- 3. Find candidate jobs using FAISS ---
+      
         print("🔍 Searching FAISS for similar jobs...")
         candidates = find_similar_jobs_by_embedding(resume_clean, top_k=50)
         if not candidates:
@@ -346,33 +341,32 @@ def analyze():
             return jsonify({"error": "No similar jobs found even after FAISS rebuild"}), 404
         print(f"👍 Found {len(candidates)} candidate jobs from FAISS.")
 
-        # --- 4. Compute ranking features ---
+        
         def compute_features(resume_skills, job_doc, resume_text):
-            # skill overlap ratio
+            
             job_skills = job_doc.get("skills_list", [])
             skill_intersection = len(set(resume_skills).intersection(set(job_skills)))
             skill_union = len(set(resume_skills).union(set(job_skills))) or 1
             skill_ratio = skill_intersection / skill_union
 
-            # vector similarity score returned from FAISS
+            
             vec_score = job_doc.get("vector_score", 0.0)
 
-            # recency (days)
+           
             created_ts = job_doc.get("posted_timestamp")
             recency_days = 365
             if created_ts:
                 recency_days = (time.time() - created_ts) / (24*3600)
             recency_score = max(0, 1 - recency_days / 90)
 
-            # location match (1 or 0)
+          
             loc_score = 0
-            user_loc = "India"  # later can detect automatically from resume
+            user_loc = "India"  
             if user_loc and job_doc.get("location") and user_loc.lower() in job_doc.get("location").lower():
                 loc_score = 1
 
             return [vec_score, skill_ratio, recency_score, loc_score]
 
-        # --- 5. Rank the candidates using ML model ---
         X = [compute_features(resume_skills, j, resume_text) for j in candidates]
         X=np.array(X)
         if X.ndim == 1:
@@ -390,11 +384,11 @@ def analyze():
         top_jobs = candidates[:10]
        
 
-        # --- 6. AI summary via Gemini ---
+   
         summary_prompt = f"Here is a resume:\n\n{resume_text}\n\nAct as a recruiter. Write a 3-sentence summary of this candidate."
         ai_summary = get_gemini_response(summary_prompt)
 
-        # --- 7. AI explanation for top job match ---
+      
         ai_match_explanation = ""
         if top_jobs:
             top_job = top_jobs[0]
@@ -402,7 +396,7 @@ def analyze():
             match_prompt = f"Resume:\n{resume_text}\n\nJob Description:\n{full_desc_for_ai}\n\nExplain 3 key reasons why this candidate fits this job."
             ai_match_explanation = get_gemini_response(match_prompt)
 
-        # --- 8. Final Response ---
+        
         return jsonify({
             "resume_skills": resume_skills,
             "matched_jobs": top_jobs,
