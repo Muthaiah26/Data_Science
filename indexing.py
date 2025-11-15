@@ -1,4 +1,4 @@
-# indexing.py
+
 import faiss
 import numpy as np
 from pymongo import MongoClient
@@ -16,10 +16,9 @@ jobs_col = db[COLLECTION]
 
 
 
-# Load same embedding model used in your app
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# FAISS index global holder (in memory)
+
 _faiss_index = None
 _id_to_mongo_id = []
 
@@ -32,15 +31,15 @@ def get_id_map():
     return _id_to_mongo_id
 
 def build_faiss_index(batch_size=512):
-    global _faiss_index, _id_to_mongo_id # Use the new names
+    global _faiss_index, _id_to_mongo_id 
     docs = list(jobs_col.find({}, {"_id": 1, "description_clean": 1, "description": 1}))
     print(f"📊 Found {len(docs)} docs in MongoDB")
 
-    # fallback to 'description' if 'description_clean' missing
+  
     texts = [d.get("description_clean") or d.get("description", "") for d in docs]
     ids = [str(d["_id"]) for d in docs]
 
-    # Check sample
+   
     if docs:
         print("🧩 Sample job:", docs[0])
 
@@ -53,7 +52,7 @@ def build_faiss_index(batch_size=512):
     embeddings = model.encode(texts, show_progress_bar=True, batch_size=batch_size)
     embeddings = np.array(embeddings).astype('float32')
 
-    # Normalize for cosine similarity
+   
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
     norms[norms == 0] = 1.0
     embeddings = embeddings / norms

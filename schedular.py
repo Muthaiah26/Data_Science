@@ -1,4 +1,4 @@
-# scheduler.py
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from fetch_jobs import fetch_adzuna, ingest_jobs_to_mongo
 from indexing import build_faiss_index

@@ -1,4 +1,4 @@
-# search_utils.py
+
 import numpy as np
 from indexing import (
     get_index, get_id_map, build_faiss_index, 
@@ -9,7 +9,7 @@ def find_similar_jobs_by_embedding(text, top_k=20):
     faiss_index = get_index()
     id_to_mongo_id = get_id_map()
 
-    # --- Step 1: Ensure FAISS is loaded ---
+   
     if faiss_index is None or id_to_mongo_id is None or len(id_to_mongo_id) == 0:
         print("⚙️ FAISS index missing in memory — rebuilding now...")
         build_faiss_index()
@@ -19,11 +19,10 @@ def find_similar_jobs_by_embedding(text, top_k=20):
             print("❌ FAISS rebuild failed — no vectors available.")
             return []
 
-    # --- Step 2: Compute embedding ---
+    
     emb = model.encode([text])[0].astype('float32')
     emb = emb / (np.linalg.norm(emb) + 1e-12)
 
-    # --- Step 3: Search FAISS ---
     D, I = faiss_index.search(emb.reshape(1, -1), top_k)
     indices = I[0].tolist()
     scores = D[0].tolist()

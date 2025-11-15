@@ -27,10 +27,10 @@
         ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
         .ai-content {
-            border-left: 4px solid #4f46e5; /* indigo-600 */
+            border-left: 4px solid #4f46e5; 
             padding-left: 1rem;
             margin-top: 1rem;
-            background-color: #f9fafb; /* gray-50 */
+            background-color: #f9fafb; 
             padding: 1rem;
             border-radius: 0.5rem;
         }
@@ -238,7 +238,7 @@
                     analyzeButton.disabled = true;
                     return;
                 }
-                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                if (file.size > 10 * 1024 * 1024) { 
                     showError("File is too large. Maximum size is 10MB.");
                     fileUpload.value = "";
                     selectedFile = null;
@@ -359,7 +359,7 @@
 
            
             const scorePercent = Math.round(job.final_score * 100);
-            const scoreColor = scorePercent > 80 ? 'text-green-600' : scorePercent > 45 ? 'text-yellow-600' : 'text-red-600';
+            const scoreColor = scorePercent >= 50 ? 'text-green-600' : scorePercent > 35 ? 'text-yellow-600' : 'text-red-600';
 
             
             const jobSkillsHtml = job.skills_list.map(skill => 
