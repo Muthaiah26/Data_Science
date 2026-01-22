@@ -1,6 +1,25 @@
 flask
 gunicorn
+
+# Data & ML
 numpy
 pandas
 scikit-learn
 joblib
+faiss-cpu
+
+# NLP / Embeddings
+sentence-transformers
+
+# PDF parsing
+PyMuPDF
+
+# Web scraping
+requests
+beautifulsoup4
+
+# Database
+pymongo
+
+# Google Gemini
+google-generativeai
